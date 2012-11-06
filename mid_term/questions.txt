@@ -11,15 +11,25 @@ Instructions for Mid-Term submission and Git Review (10pts):
  
  Questions (20pts):
  - What are the three uses of the curly brackets {} in Ruby?
+main: hash instantiation, block delimiters (including creating Proc and lambda objects), code evaluation within a String. 
+
  - What is a regular expression and what is a common use for them?
+
  - What is the difference between how a String, a symbol, a FixNum, and a Float are stored in Ruby?
+
  - Are these two statements equivalent? Why or Why Not?
    1. x, y = "hello", "hello"
    2. x = y = "hello"
+
 - What is the difference between a Range and an Array?
+
 - Why would I use a Hash instead of an Array?
+
 - What is your favorite thing about Ruby so far?
+* Proc objects as a way of passing code are a useful idea.
+
 - What is your least favorite thing about Ruby so far?
+* Since variables and method parameters aren't typed, and since there is no compile-time checking of parameters, the coder has to include boilerplate type-checking in every method to make sure the parameters passed are of the correct type.
  
  Programming Problems (10pts each):
  - Write a passing rspec file called even_number_spec.rb that tests a class called EvenNumber.
