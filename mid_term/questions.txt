@@ -4,6 +4,7 @@ Instructions for Mid-Term submission and Git Review (10pts):
  - Your git log should reflect your work, don't just commit after you have finished working
  - Use .gitignore to ignore any files that are not relevant to the midterm
  - E-mail me your ssh public key
+~/.ssh/id_rsa.pub
  - I will email you back with your repository name
  - Add a remote to your git repository: git@nird.us:RubyFall2012/YOURREPOSITORYNAME.git
  - Push your changes to the remote
@@ -11,7 +12,7 @@ Instructions for Mid-Term submission and Git Review (10pts):
  
  Questions (20pts):
  - What are the three uses of the curly brackets {} in Ruby?
-main: hash instantiation, block delimiters (including creating Proc and lambda objects), code evaluation within a String. 
+main: hash instantiation, block delimiters (including creating Proc and lambda objects), code evaluation within a String. (Also some weird literals)
 
  - What is a regular expression and what is a common use for them?
 
@@ -20,6 +21,7 @@ main: hash instantiation, block delimiters (including creating Proc and lambda o
  - Are these two statements equivalent? Why or Why Not?
    1. x, y = "hello", "hello"
    2. x = y = "hello"
+(Try this out, with object_id, but it looks like they will be different objects for parallel assignment, and the same object for the repeat assignment.)
 
 - What is the difference between a Range and an Array?
 
