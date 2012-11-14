@@ -17,7 +17,18 @@ describe Turkey do
   it "should gobble speak" do
     @turkey.gobble_speak("Hello I Am a Turkey. Please Don't Eat Me.").should eq "Gobble Gobble Gobble gobble Gobble. Gobble Gobb'le Gobble Gobble."
   end
-  
+
+  it "should gobble speak some more" do
+    inStr = "Wow, THIS is some *crazy* string manipulation, ain't it? You @bet'cha@ it is Wally!"
+    outStr = "Gobble, Gobble gobble gobble *gobble* gobble gobble, gobb'le gobble? Gobble @gobb'le@ gobble gobble Gobble!"
+    @turkey.gobble_speak(inStr).should eq outStr
+  end
+
+  it "should gobble speak one more time" do
+    inStr = "I've heard People say 'It's time to talk turkey' before, but they CAN'T mean THIS!!"
+    outStr = "Gobb'le gobble Gobble gobble 'Gobb'le gobble gobble gobble gobble' gobble, gobble gobble Gobb'le gobble Gobble!!"
+    @turkey.gobble_speak(inStr).should eq outStr
+  end
 end
 
 require "#{File.dirname(__FILE__)}/thanksgiving_dinner"
@@ -36,6 +47,18 @@ describe ThanksgivingDinner do
  # Use inject here
  it "should sum the letters in each guest name for the seating chart size" do
    @t_dinner.seating_chart_size.should eq 45
+ end
+
+ it "should pass a couple more tests re: seating charts" do
+    temp1 = ThanksgivingDinner.new(:paleo)
+    temp1.menu[:diet].should eq :paleo
+
+    temp1.seating_chart_size.should be_zero
+    temp1.guests = "George", "Emma", "Iain", "Raven", "Lyn", "Becky", "Peter"
+    temp1.seating_chart_size.should eq 32
+
+    temp1.guests += ["Uninvited Guests!"]
+    temp1.seating_chart_size.should eq 49
  end
  
  it "should provide a menu" do

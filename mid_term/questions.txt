@@ -17,6 +17,8 @@ Instructions for Mid-Term submission and Git Review (10pts):
 
 Q1. What are the three uses of the curly brackets {} in Ruby?
 
+(Examples in sample1.rb)
+
 1. Hash instantiation:
 
   hash1 = { :fish => "Wanda",
@@ -29,7 +31,7 @@ Q1. What are the three uses of the curly brackets {} in Ruby?
 
 2. Block delimiters, including creating Proc or lambda objects
 
-  hash1.each { |k, v| puts "A #{k.to_s} named \"#{v.to_s}\"" }
+  hash1.each { |k, v| puts "A #{k.to_s} named #{'"' + v.to_s + '"'}" }
 
   A fish named "Wanda"
   A boy named "Sue"
@@ -61,34 +63,357 @@ Q1. What are the three uses of the curly brackets {} in Ruby?
 
 Q2. What is a regular expression and what is a common use for them?
 
+(Examples in sample2.rb)
+
+A regular expression defines a pattern of characters, including character literals, substring literals, classes of characters (whitespace, digits, letters, etc.), as well as repetitions, alternations ("match any one of several"), or exclusions of these. Useful character classes include letters, digits, whitespace, and word boundaries.
+
+Some examples of regular expressions:
+
+regexp1 = /[Rr]uby/ # Match "Ruby" or "ruby"
+regexp2 = /x+.*y+/ # Match any string with at least one x followed by at least one y
+regexp3 = /([aeiou])\1/ # Match any vowel appearing twice in a row (lower-case only)
+regexp4 = /^([A-Za-z0-9_]{1,50})(\.([a-z0-9]{1,3}))?$/ # Match a file name, up to 50 characters and an optional extension
+regexp5 = /^(206|425|253)-(\d{3})-(\d{4})$/ # Match only a phone number with one of three area codes
+
+The first common use is just to check for the presence of a pattern within a string. Using the =~ operator, we simply get the index where the pattern starts within the string, or a nil if the pattern is not matched.
+
+"We are studying Ruby" =~ regexp1
+ => 16 
+
+"We are also using Git" =~ regexp1
+ => nil 
+
+Or we can use the the Regexp.match() method, which returns a MatchData object. By default, Ruby uses greedy matching, which will return the longest matching substring for the pattern. In the second example below, this causes the MatchData to use the first instance of 'x' rather than the second instance of 'xx' as the starting point for the match:
+
+md1 = regexp2.match("This one has a y and then an x, so it won't match.")
+ => nil 
+
+md2 = regexp2.match("This has x and then xx and then yyy, so we expect a match.")
+ => #<MatchData "x and then xx and then yyy"> 
+
+When parts of the regular expression are parenthesized, this causes the matching substrings to be saved to the MatchData as an array of strings. In the case of nested parentheses, the inner pattern is a substring of the outer pattern. In this case, the file extension with the dot matches the second sub-pattern, and without the dot matches the third:
+
+md3 = regexp4.match("Wild_Card77.txt")
+ => #<MatchData "Wild_Card77.txt" 1:"Wild_Card77" 2:".txt" 3:"txt"> 
+
+md4 = regexp4.match("W_E_I_R_D_N_A_M_E")
+ => #<MatchData "W_E_I_R_D_N_A_M_E" 1:"W_E_I_R_D_N_A_M_E" 2:nil 3:nil> 
+
+md5 = regexp4.match("fix@this_name.rb")
+ => nil 
+
+The second common use of regular expressions is to perform substitutions on the matched parts of a string. The most basic way is with the String.sub() or String.gsub() methods, which just matches the entire pattern, and replaces it with a new substring:
+
+"This has x and then xx and then yyy, so we expect a match.".sub(regexp2, "the right letters").sub("match", "replacement")
+ => "This has the right letters, so we expect a replacement." 
+
+"Three clean moons seen between four screen doors.".gsub(regexp3, "--")
+ => "Thr-- clean m--ns s--n betw--n four scr--n d--rs."
+
+When the regular expression includes sub-patterns that we want to manipulate separately, we can use the sub-pattern index which goes along with the MatchData. Some practice coding indicates that for very simple substitution, referencing the index with a simple backslash works well, but for more complicated changes, such as upcasing or taking a substring, referencing the MatchData in a block works better:
+
+"Wild_Card77.txt".sub(regexp4, 'Name: \1, Extension: \3')
+ => "Name: Wild_Card77, Extension: txt" 
+
+"Wild_Card77.txt".match(regexp4) { |md| "Name: #{$1}; Extension: #{$3.upcase}" }
+ => "Name: Wild_Card77; Extension: TXT" 
+
+"425-772-8187".sub(regexp5, '\1-xxx-\3')
+ => "425-xxx-8187" 
+
+"206-331-6953".match(regexp5) { |md| "#{$1}-#{$2}-#{$3[0,2]}xx" }
+ => "206-331-69xx" 
+
+And if we want the MatchData and the matched substrings to stick around longer, we can use the MatchData explicitly, and assign its parts to variables:
+
+phoneNums = ["206-331-6953", "425-772-8187", "253-867-5309"]
+pnMap = Hash.new()
+phoneNums.each do |pn|
+  md = pn.match(regexp5)
+  pnMap[pn] = md
+  areaCode = md[1]
+  exchange = md[2]
+  line = md[3]
+  puts("Area Code: #{areaCode}; Exchange: #{exchange}; Line: #{line}")
+end
+puts pnMap
+
+Area Code: 206; Exchange: 331; Line: 6953
+Area Code: 425; Exchange: 772; Line: 8187
+Area Code: 253; Exchange: 867; Line: 5309
+
+{"206-331-6953"=>#<MatchData "206-331-6953" 1:"206" 2:"331" 3:"6953">,
+ "425-772-8187"=>#<MatchData "425-772-8187" 1:"425" 2:"772" 3:"8187">,
+ "253-867-5309"=>#<MatchData "253-867-5309" 1:"253" 2:"867" 3:"5309">}
+
 ----
 
-Q3. What is the difference between how a String, a symbol, a FixNum, and a Float are stored in Ruby?
+Q3. What is the difference between how a String, a symbol, a Fixnum, and a Float are stored in Ruby?
+
+(Examples in sample3.rb)
+
+For both a Symbol and a Fixnum, each value is created only once, and any reference to that value will be referring to the same object instance (the same location in memory). So if we assign the same symbol literal to multiple variables, they'll all refer to the same object. This is most easily checked by looking at the object_id property of each object:
+
+sym1 = :symbol1
+sym2 = :symbol1
+sym3 = sym1
+
+puts ("Symbol values and object ID's")
+puts ("sym1 value = #{sym1.inspect}, object_id = #{sym1.object_id}")
+puts ("sym2 value = #{sym2.inspect}, object_id = #{sym2.object_id}")
+puts ("sym3 value = #{sym3.inspect}, object_id = #{sym3.object_id}")
+
+Symbol values and object ID's
+sym1 value = :symbol1, object_id = 461768
+sym2 value = :symbol1, object_id = 461768
+sym3 value = :symbol1, object_id = 461768
+
+Symbols are immutable, so we can't make any changes to them. This makes them good candidates for use as hash keys.
+
+For Fixnums ("small" integers) we should see the same behavior as for symbols, at first: All three of these refer to the same object in memory.
+
+fn1 = 42
+fn2 = 42
+fn3 = fn1
+
+puts ("\nInitializing Fixnums")
+puts ("fn1 value = #{fn1.inspect}, object_id = #{fn1.object_id}")
+puts ("fn2 value = #{fn2.inspect}, object_id = #{fn2.object_id}")
+puts ("fn3 value = #{fn3.inspect}, object_id = #{fn3.object_id}")
+
+Initializing Fixnums
+fn1 value = 42, object_id = 85
+fn2 value = 42, object_id = 85
+fn3 value = 42, object_id = 85
+
+But when we start modifying the values, even though it looks like we are modifying a value "in place", we aren't actually doing that. This will get the value of fn1, multiply it, get the reference to the resulting new FixNum, and assigns that reference to fn1. It will not change fn2 or fn3.
+
+fn1 *= 3
+
+puts ("\nAfter multiplying Fixnum fn1")
+puts ("fn1 value = #{fn1.inspect}, object_id = #{fn1.object_id}")
+puts ("fn2 value = #{fn2.inspect}, object_id = #{fn2.object_id}")
+puts ("fn3 value = #{fn3.inspect}, object_id = #{fn3.object_id}")
+
+After multiplying Fixnum fn1
+fn1 value = 126, object_id = 253
+fn2 value = 42, object_id = 85
+fn3 value = 42, object_id = 85
+
+According to the RDoc, both Fixnum and Bignum extend Integer. When we create an integer value, if it's small (fits in one machine word), it's created as a Fixnum object. If it's larger, it becomes a Bignum. So are Bignums handled in the same way as Fixnums? Probably not; since they can take up an arbitrary amount of space, we can't expect Bignums to always refer to the same memory location, so we'll probably get different objects for different instances of the same value:
+
+int4 = Integer(2 ** 61) # 2^61, still a Fixnum
+int5 = Integer(2 ** 62) # 2^62, now a Bignum
+int6 = Integer(2 ** 62) # Same Bignum, or different?
+int7 = int5;
+
+puts ("\nInitializing more Integers, should see some Bignums")
+puts ("int4 class = #{int4.class}, value = #{int4.inspect}, object_id = #{int4.object_id}")
+puts ("int5 class = #{int5.class}, value = #{int5.inspect}, object_id = #{int5.object_id}")
+puts ("int6 class = #{int6.class}, value = #{int6.inspect}, object_id = #{int6.object_id}")
+puts ("int7 class = #{int7.class}, value = #{int7.inspect}, object_id = #{int7.object_id}")
+
+Initializing more Integers, should see some Bignums
+int4 class = Fixnum, value = 2305843009213693952, object_id = 4611686018427387905
+int5 class = Bignum, value = 4611686018427387904, object_id = 15377780
+int6 class = Bignum, value = 4611686018427387904, object_id = 15334480
+int7 class = Bignum, value = 4611686018427387904, object_id = 15377780
+
+As expected, int5, int6, and int7 all have the same value, but int6 refers to a different object. int7 copies the reference to int5, so it has the same object_id.
+
+And if we modify these values, do we get a reference to a new object, or is it the same object with a changed value? We see that we get a new object with the new value, and references to the old object are unchanged:
+
+int5 *= 3
+int6 *= 3
+
+puts ("\nAfter multiplying Bignums")
+puts ("int5 class = #{int5.class}, value = #{int5.inspect}, object_id = #{int5.object_id}")
+puts ("int6 class = #{int6.class}, value = #{int6.inspect}, object_id = #{int6.object_id}")
+
+After multiplying Bignums
+int5 class = Bignum, value = 13835058055282163712, object_id = 13424260
+int6 class = Bignum, value = 13835058055282163712, object_id = 13413560
+int7 class = Bignum, value = 4611686018427387904, object_id = 15377780
+
+For Floats, we expect the same behavior as for Bignums. Since the values of Floats are arbitrary, there is no idea of a "next" Float in a sequence. Between any two Floats, there are an infinite number of other Float values (in theory, at least; in practice, we're limited by machine precision). So we can't expect all the Float values to have their own fixed place in memory. Even if two Floats have the same value, we expect to see that they will refer to different objects.
+
+Assigning from one variable to another, or calling the Float(...) method with an existing Float as its argument, will result in copying the reference, so the two variables will reference the same object.
+
+fl1 = Float(17.3)
+fl2 = Float(17.3)
+fl3 = 17.3
+fl4 = 17.3
+fl5 = fl1
+fl6 = Float(fl1)
+
+puts ("\nInitializing floats")
+puts ("fl1: class = #{fl1.class}; value = #{fl1.inspect}; object_id = #{fl1.object_id}")
+puts ("fl2: class = #{fl2.class}; value = #{fl2.inspect}; object_id = #{fl2.object_id}")
+puts ("fl3: class = #{fl3.class}; value = #{fl3.inspect}; object_id = #{fl3.object_id}")
+puts ("fl4: class = #{fl4.class}; value = #{fl4.inspect}; object_id = #{fl4.object_id}")
+puts ("fl5: class = #{fl5.class}; value = #{fl5.inspect}; object_id = #{fl5.object_id}")
+puts ("fl6: class = #{fl6.class}; value = #{fl6.inspect}; object_id = #{fl6.object_id}")
+
+Initializing floats
+fl1: class = Float; value = 17.3; object_id = 15393080
+fl2: class = Float; value = 17.3; object_id = 15382620
+fl3: class = Float; value = 17.3; object_id = 15374440
+fl4: class = Float; value = 17.3; object_id = 15367720
+fl5: class = Float; value = 17.3; object_id = 15393080
+fl6: class = Float; value = 17.3; object_id = 15393080
+
+The first four, even though they have the same value and were created from the same floating point literal, refer to different objects. The last two are just reference copies of the first one, so they have the same object ID.
+
+And modifying the value, as with a Bignum, does not change the value in place. A new reference is created, to a new object with the new value. Variables that previously shared the same reference still refer to the original object, and are unaffected:
+
+fl1 *= 2.5
+
+puts ("\nAfter multiplying floats")
+puts ("fl1: class = #{fl1.class}; value = #{fl1.inspect}; object_id = #{fl1.object_id}")
+puts ("fl5: class = #{fl5.class}; value = #{fl5.inspect}; object_id = #{fl5.object_id}")
+puts ("fl6: class = #{fl6.class}; value = #{fl6.inspect}; object_id = #{fl6.object_id}")
+
+After multiplying floats
+fl1: class = Float; value = 43.25; object_id = 15461380
+fl5: class = Float; value = 17.3; object_id = 15393080
+fl6: class = Float; value = 17.3; object_id = 15393080
+
+Strings behave differently from any of the above types. Like Bignums or Floats, even if they refer to the same value, Strings will refer to different objects, except in the case where we are just copying a reference from one variable to another:
+
+str1 = "Sample String"
+str2 = "Sample String"
+str3 = str1
+str4 = String(str3)
+
+puts ("\nInitializing Strings")
+puts ("str1 value = #{str1}, object_id = #{str1.object_id}")
+puts ("str2 value = #{str2}, object_id = #{str2.object_id}")
+puts ("str3 value = #{str3}, object_id = #{str3.object_id}")
+puts ("str4 value = #{str4}, object_id = #{str4.object_id}")
+
+Initializing Strings
+str1 value = Sample String, object_id = 16980260
+str2 value = Sample String, object_id = 17552760
+str3 value = Sample String, object_id = 16980260
+str4 value = Sample String, object_id = 16980260
+
+But, unlike the other types, Strings have true "in-place" modifiers, so that a value can be changed, and the variable still refers to the same object ID. Therefore, any other variables which reference the same object will be affected at the same time. Changing str1 in-place will also affect str3 and str4.
+
+After upcasing String str1 in place
+str1 value = SAMPLE STRING, object_id = 16980260
+str2 value = Sample String, object_id = 17552760
+str3 value = SAMPLE STRING, object_id = 16980260
+str4 value = SAMPLE STRING, object_id = 16980260
+
+In summary:
+
+Symbols: References to the same symbol literal always refer to the same object. Symbols are immutable, so no changes can be made to the object.
+
+Fixnums: References to the same value always refer to the same object. Fixnum objects are immutable. Any change to the value results in a new reference to a different object, which has the new value.
+
+Bignums: References to the same value refer to different Bignum objects, except in the case of assigning one variable to another, which just copies the object reference. Like Fixnums, Bignums cannot be modified in-place. Any change to the value results in a new reference to a different object, which has the new value.
+
+Floats: The behavior is the same as for Bignums.
+
+Strings: References created from the same literal value will refer to different objects. Copying from one variable to another, either by direct assignment or via the String(...) method, will yield a reference to the same object. And since Strings can be modified in-place, changing the contents of a String object will affect all variables which refer to that object.
 
 ----
 
 Q4. Are these two statements equivalent? Why or Why Not?
    1. x, y = "hello", "hello"
    2. x = y = "hello"
-(Try this out, with object_id, but it looks like they will be different objects for parallel assignment, and the same object for the repeat assignment.)
+
+(Examples in sample4.rb)
+
+This is pretty much explained by the description of String behavior above.
+
+Because the first is parallel assignment, it is creating two different objects from two different string literals, and we expect them to have different object ID's. It's functionally the same as doing two separate assignments in two lines of code.
+
+str1, str2 = "hello", "hello"
+
+puts ("\nParallel initialization of Strings")
+puts ("str1 value = #{str1}, object_id = #{str1.object_id}")
+puts ("str2 value = #{str2}, object_id = #{str2.object_id}")
+
+Parallel initialization of Strings
+str1 value = hello, object_id = 6675160
+str2 value = hello, object_id = 6675140
+
+The second example is assigning the literal to the first variable, and then copying that reference to the second variable (working right-to-left), so they'll both be references to the same object.
+
+str3 = str4 = "hello"
+
+puts ("\nTransitive initialization of Strings")
+puts ("str3 value = #{str3}, object_id = #{str3.object_id}")
+puts ("str4 value = #{str4}, object_id = #{str4.object_id}")
+
+Transitive initialization of Strings
+str3 value = hello, object_id = 6855720
+str4 value = hello, object_id = 6855720
 
 ----
 
 Q5. What is the difference between a Range and an Array?
 
+(Some practice code for Range-friendly objects is in squareRange.rb and steakRange.rb)
+
+An Array is an indexed collection of values. Each integer index can be used to insert or retrieve a value into the array, and the associated values can be objects of any type.
+
+A Range is used for iteration, and the elements of a Range must be objects for which the .succ (successor) method and the comparison operator <=> are implemented.
+
+There are some common methods, such as .max(), .min(), .first(n), .last(n), and .each(), which are mixed in from Enumerable.
+
+A Range can be created by specifying two mutually comparable objects as its endpoints. Then when iterating over the range, each successive element is produced by calling the successor method on the previous element.
+
 ----
 
 Q6. Why would I use a Hash instead of an Array?
 
+(Examples in sample6.rb)
+
+The two have many similarities:
+
+* Both provide a mapping from a key or index to an associated value.
+* Both will expand to make room for more elements.
+* Both have iterative methods to traverse them
+* Both can take any type of object as the value in a key-value (or index-value) pair
+* Both are restricted to a single value object which can be accessed by any key.
+
+But a Hash is more flexible than an Array, because it can also take any kind of object as the key in the key-value pair, where an Array can only take integers. Even though they serve the same purpose, it's easier to think of them as "indexes" for Arrays, and "keys" for a Hashes.
+
+Hashes are used to make an association from one value to another, such as a person's name (a String) to an employee record (a complex object), or from a state code (a symbol) to the name of the state (a String).
+
+Arrays can be convenient for iteration with a numeric index, and because they are guaranteed to return their elements in a consistent order.
+
 ----
 
 Q7. What is your favorite thing about Ruby so far?
-* Proc objects as a way of passing code are a useful idea.
+
+I like the idea of Proc objects, and the way they can be used in blocks. It seems like it could be handy to be able to define functionality in a small chunk of code, and then pass it to a method which can execute it. Blocks which make use of implicit Proc objects are also useful, although I think the tendency to squash everything into strung-together blocks (a favorite Ruby idiom) makes for code that is very difficult to read.
 
 ----
 
 Q8. What is your least favorite thing about Ruby so far?
-* Since variables and method parameters aren't typed, and since there is no compile-time checking of parameters, the coder has to include boilerplate type-checking in every method to make sure the parameters passed are of the correct type.
+
+Most of what I dislike about Ruby can be summarized as: It is a very imprecise language, and it encourages sloppy coding. It's therefore hard to read, hard to verify, and hard to debug.
+
+The lack of declared variables, just defining them all on the fly, makes it difficult to know whether something is in or out of scope, and can easily cause name collisions.
+
+Not declaring types for variables or parameters makes it very easy for a value of the wrong type to be supplied. In theory, in Ruby-world, types don't matter. In practice, a method can accept anything and simply blow up (or worse, appear to execute correctly but return garbage results) at runtime, so a developer will need to put in a lot of safeguards to make sure only the expected types are receieved and operated on.
+
+The absence of method polymorphism, because parameters don't have type declarations, adds to this. Since a method name can't be declared with multiple signatures, instead a single method has to be declared which can take a variable number and types of arguments, and then within the body of that method the correct operations must be determined for the parameter types received.
+
+The preference for omitting explicit return statements from methods, and simply returning the last thing evaluated, is a recipe for failure when there are multiple paths of execution through a method. The developer will need to make sure a single return value is always declared, and that one value is in a known state regardless of which path is executed, so that it is always valid to return.
+
+Methods also don't declare exception types which can be thrown, so there is no way of knowing in advance (without crawling through every line of source code) what exceptions your code needs to be able to handle.
+
+The general fluidity of syntax makes Ruby very difficult to read. For anything you want to code, there are probably a dozen ways to do it, and the Ruby preference seems to be to choose the most obscure way to write anything. The language could be greatly improved by removing (or at least deprecating) some of these. For example, the "unless" conditional as negation of "if", and the "if" and "unless" modifiers that can go at the end of a line, instead of the beginning of a block, add nothing to the language and encourage sloppy coding. Badly implemented arrays, which allow negative indexes and do not report out-of-bounds exceptions also add nothing, allow for poor coding, and make ambiguous results since an out-of-bounds index can return the same value as one which is in the correct range for the array.
+
+The lack of a compiler means that many errors, including basic syntax, are not detectable until runtime. And if you are trying to include an external library, there is no way of checking your use of it against a published API, with respect to required parameter types, return types, or exceptions which can be thrown. There is no way of checking for any of these other than reading the API instructions and hoping that the implementation is correct; a runtime failure will usually be your first indication that something has gone wrong.
+
+In the Ruby world, a lot of the above is referred to as "flexibility," and considered to be a Good Thing. However, overcooked spaghetti is also very flexible, and it is also difficult to untangle or to build anything with.
+
+In general, the language could be improved greatly if extraneous syntactic options were tossed out; variable and parameter declaration made rigorous; return types and throwable exceptions declared for methods; methods required an explicit return statement; a compiler created; and best practices were adopted which favored readable code.
 
 ====
  
