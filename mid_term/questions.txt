@@ -3,35 +3,94 @@ Instructions for Mid-Term submission and Git Review (10pts):
  - Add and Commit as you work through the questions and programming problems
  - Your git log should reflect your work, don't just commit after you have finished working
  - Use .gitignore to ignore any files that are not relevant to the midterm
- - E-mail me your ssh public key
-~/.ssh/id_rsa.pub
+ - E-mail me your ssh public key (Find at ~/.ssh/id_rsa.pub)
  - I will email you back with your repository name
  - Add a remote to your git repository: git@nird.us:RubyFall2012/YOURREPOSITORYNAME.git
  - Push your changes to the remote
  - After 6pm Tuesday November 13th you will not be able to push to your remote repository (or clone).
+
+====
  
  Questions (20pts):
- - What are the three uses of the curly brackets {} in Ruby?
-main: hash instantiation, block delimiters (including creating Proc and lambda objects), code evaluation within a String. (Also some weird literals)
 
- - What is a regular expression and what is a common use for them?
+----
 
- - What is the difference between how a String, a symbol, a FixNum, and a Float are stored in Ruby?
+Q1. What are the three uses of the curly brackets {} in Ruby?
 
- - Are these two statements equivalent? Why or Why Not?
+1. Hash instantiation:
+
+  hash1 = { :fish => "Wanda",
+            :boy => "Sue",
+            :streetcar => "Desire" }
+
+  puts hash1
+
+  {:fish=>"Wanda", :boy=>"Sue", :streetcar=>"Desire"}
+
+2. Block delimiters, including creating Proc or lambda objects
+
+  hash1.each { |k, v| puts "A #{k.to_s} named \"#{v.to_s}\"" }
+
+  A fish named "Wanda"
+  A boy named "Sue"
+  A streetcar named "Desire"
+
+  doubler = lambda { |p| puts "#{p}*2 = #{p*2}" }
+
+  puts "Object doubler is of class #{doubler.class}"
+  puts "doubler.inspect returns #{doubler.inspect}"
+
+  Object doubler is of class Proc
+  doubler.inspect returns #<Proc:0x00000001252d98@sample1.rb:15 (lambda)>
+
+  doubler.call 10
+  doubler.call "fish"
+  doubler.call ["zz", "yy", "xx"]
+  doubler.call [:a, :b]
+
+  10*2 = 20
+  fish*2 = fishfish
+  ["zz", "yy", "xx"]*2 = ["zz", "yy", "xx", "zz", "yy", "xx"]
+  [:a, :b]*2 = [:a, :b, :a, :b]
+
+3. Code-evaluation within a double-quoted string.
+
+  See the preceding examples, string output made use of this.
+
+----
+
+Q2. What is a regular expression and what is a common use for them?
+
+----
+
+Q3. What is the difference between how a String, a symbol, a FixNum, and a Float are stored in Ruby?
+
+----
+
+Q4. Are these two statements equivalent? Why or Why Not?
    1. x, y = "hello", "hello"
    2. x = y = "hello"
 (Try this out, with object_id, but it looks like they will be different objects for parallel assignment, and the same object for the repeat assignment.)
 
-- What is the difference between a Range and an Array?
+----
 
-- Why would I use a Hash instead of an Array?
+Q5. What is the difference between a Range and an Array?
 
-- What is your favorite thing about Ruby so far?
+----
+
+Q6. Why would I use a Hash instead of an Array?
+
+----
+
+Q7. What is your favorite thing about Ruby so far?
 * Proc objects as a way of passing code are a useful idea.
 
-- What is your least favorite thing about Ruby so far?
+----
+
+Q8. What is your least favorite thing about Ruby so far?
 * Since variables and method parameters aren't typed, and since there is no compile-time checking of parameters, the coder has to include boilerplate type-checking in every method to make sure the parameters passed are of the correct type.
+
+====
  
  Programming Problems (10pts each):
  - Write a passing rspec file called even_number_spec.rb that tests a class called EvenNumber.
@@ -45,6 +104,8 @@ main: hash instantiation, block delimiters (including creating Proc and lambda o
       - Mixin Enumerable
       - Define each so it returns wishes as strings with their index as part of the string
 
+====
+ 
 Mid-Term Spec (50pts):
 - Make the tests pass.
  
